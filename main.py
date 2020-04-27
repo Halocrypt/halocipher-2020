@@ -73,37 +73,53 @@ def encrypt(message):
             <Eg: _great --> (_gat),(re)
         """
         
+        
+        """
+        A recursive function for randomizing the best possible candidates
+        """
+
+        def randomize(chunk):
          # Encrypted and Schema Blocks
-        chunk_random_indices = random.sample(range(0, len(chunk)), random.randint(0, len(chunk)))
-
-        if not chunk_random_indices:
-            chunk_random_indices.append(0)
-
-        if len(chunk_random_indices) == len(chunk):
+            chunk_final_indices = []
+        
             chunk_random_indices = random.sample(range(0, len(chunk)), random.randint(0, len(chunk)))
+        
+            #if not chunk_random_indices:
+             #   chunk_random_indices.append(0)
 
-        chunk_encrypted = {}
-        chunk_schema = {}
+            if len(chunk_random_indices) != len(chunk):
+                chunk_final_indices = chunk_random_indices
+        
+            chunk_encrypted = {}
+            chunk_schema = {}
 
 
-        for indice in chunk_dict:
-            if int(indice) in chunk_random_indices:
-                chunk_encrypted[str(indice)] = chunk_dict.get(indice)
-            else:
-                chunk_schema[str(indice)] = chunk_dict.get(indice)
+            for indice in chunk_dict:
+                if int(indice) in chunk_final_indices:
+                    chunk_encrypted[str(indice)] = chunk_dict.get(indice)
+                else:
+                    chunk_schema[str(indice)] = chunk_dict.get(indice)
 
-        if not chunk_schema:
-            chunk_schema["0"] = chunk_dict.get("0")
+            if not chunk_schema:
+                return randomize(chunk)
+                #chunk_schema["0"] = chunk_dict.get("0")
 
-        if not chunk_encrypted:
-            chunk_encrypted["0"] = chunk_dict.get("0")
-
+            if not chunk_encrypted:
+                return randomize(chunk)
+                #chunk_encrypted["0"] = chunk_dict.get("0")
+            
+            return chunk_encrypted, chunk_schema
+        
+        chunk_encrypted, chunk_schema = randomize(chunk)
+        
         block["encrypted"] = chunk_encrypted
         block["schema"] = chunk_schema
-
-
-
+        
+        # Appending the block to the list of blocks
         blocks.append(block)
+
+
+        # Incrementing the signature count
         signature_count += signature_increment
 
 
