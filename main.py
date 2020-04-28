@@ -38,8 +38,10 @@ class Lexer():
         self.blocks = blocks
         self.lexer = lexer
     
+    
+    
     """
-    Method for sorting the dictionary and then creating the final version.
+        Encrypted:
 
     """
 
@@ -70,13 +72,46 @@ class Lexer():
             #blocks.append(new_block)
             blocks.append(final_block)
 
-        self.encrypted_data = blocks
-
+        self.encrypted_data = blocks    
+    
     """
-        Method for generating the encrypted file.
-
+        Schema:
+        
     """
-    def generate_encrypted(self): 
+    def create_schema(self):
+        blocks = []
+        for block in self.blocks:
+            final_block = {}
+            final_block["signature"] = block["signature"]
+
+            sorted_block = sorted(block["schema"])
+            for index, item in enumerate(sorted_block):
+                sorted_block[index] = int(item)
+            
+            lexered_block = []
+            
+            for index in sorted_block:
+                lexered_block.append(str(self.lexer.get(index)) + str( block["schema"].get(str(index))))
+            
+            def concat(list):
+                result= ''
+                for element in list:
+                    result += str(element)
+                return result
+
+            final_block["string"] = concat(lexered_block)
+            
+
+            #blocks.append(new_block)
+            blocks.append(final_block)
+
+        self.schema_data = blocks
+    
+    """
+        Generate Files
+    """
+    
+    def generate_files(self): 
         def base_str():
             return (string.ascii_letters+string.digits)   
         def key_gen():
@@ -85,13 +120,21 @@ class Lexer():
 
 
         encrypted_final = ""
+        schema_final = ""
         for block in self.encrypted_data:
             encrypted_string = ("<" + str(block["signature"]) + ":" + str(block["string"]) + ">")
             encrypted_final += encrypted_string
-        file_name = str("encrypted_" + key_gen())
-        encrypted_file = File(encrypted_final, file_name, "halo")
+        for block in self.schema_data:
+            schema_string = ("<" + str(block["signature"]) + ":" + str(block["string"]) + ">")
+            schema_final += schema_string
+        
+        file_name = str(key_gen())
+        encrypted_file = File(encrypted_final, "encrypted_" + file_name, "halo")
         encrypted_file.save()
-        return "File generated successfully at {}".join(file_name)
+        
+        schema_file = File(schema_final, "schema_" + file_name, "halo")
+        schema_file.save()
+        return "Files generated successfully at {}".join(file_name)
             
 
 """
@@ -218,6 +261,7 @@ def encrypt(message):
 string_l = encrypt("Twenty One Pilots is great")
 new_l = Lexer(string_l)
 new_l.create_encrypted()
-new_l.generate_encrypted()
+new_l.create_schema()
+new_l.generate_files()
 #print(json.dumps(string_l, indent=4))
 #print(json.dumps(new_l.create_encrypted(), indent=4))
