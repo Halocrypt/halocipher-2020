@@ -6,12 +6,21 @@
 # Imports
 from functools import partial
 from io import StringIO
-import random, json
+import random, json, operator, string
+
+
+"""
+    Exceptions
+"""
+class NullEncryptedContent(Exception):
+    pass
+
 
 
 """
     Utility Classes
 """
+
 class File():
     def __init__(self, content, filename, extension):
         self.content = content
@@ -23,26 +32,95 @@ class File():
             file.write(self.content)
             file.close()
 
+
+class Lexer():
+    def __init__(self, blocks: list, lexer: dict = {0: ')', 1: '!', 2: '@', 3: '#', 4: '$', 5: '%', 6: '^', 7: '&', 8: '*', 9: '('}):
+        self.blocks = blocks
+        self.lexer = lexer
+    
+    """
+    Method for sorting the dictionary and then creating the final version.
+
+    """
+
+    def create_encrypted(self):
+        blocks = []
+        for block in self.blocks:
+            final_block = {}
+            final_block["signature"] = block["signature"]
+
+            sorted_block = sorted(block["encrypted"])
+            for index, item in enumerate(sorted_block):
+                sorted_block[index] = int(item)
+            
+            lexered_block = []
+            
+            for index in sorted_block:
+                lexered_block.append(str(self.lexer.get(index)) + str( block["encrypted"].get(str(index))))
+            
+            def concat(list):
+                result= ''
+                for element in list:
+                    result += str(element)
+                return result
+
+            final_block["string"] = concat(lexered_block)
+            
+
+            #blocks.append(new_block)
+            blocks.append(final_block)
+
+        self.encrypted_data = blocks
+
+    """
+        Method for generating the encrypted file.
+
+    """
+    def generate_encrypted(self): 
+        def base_str():
+            return (string.ascii_letters+string.digits)   
+        def key_gen():
+            keylist = [random.choice(base_str()) for i in range(10)]
+            return ("".join(keylist))
+
+
+        encrypted_final = ""
+        for block in self.encrypted_data:
+            encrypted_string = ("<" + str(block["signature"]) + ":" + str(block["string"]) + ">")
+            encrypted_final += encrypted_string
+        file_name = str("encrypted_" + key_gen())
+        encrypted_file = File(encrypted_final, file_name, "halo")
+        encrypted_file.save()
+        return "File generated successfully at {}".join(file_name)
+            
+
 """
     Encrypt/Decrypt Functions
 """
+
 def encrypt(message):
 
     """
     Converting the text into a List() of chunks with the chunk_size = 10
     """
 
+
     # Lowercasing the message content
+    # Unicoding the string incase u r like me and didn't care to set an alias and used python2 all the time
     block_string = u'{}'.format(message.lower())
 
     # Chunk Code
     chunk_size = 10
     chunks = [l for l in iter(partial(StringIO(block_string).read, chunk_size), '')]
     
+    
+
     """
     Converting chunks into Blocks :-->
     Adding a predecided signature that increments with +10 to the chunks respectively
     """
+
+
 
     # An empty list that will contain blocks
     blocks = []
@@ -68,6 +146,10 @@ def encrypt(message):
         block["signature"] = signature_count
         block["chunk"] = chunk_dict
         
+
+
+
+
         """
             Sorting: Randomly picking letters for encrypted/schema file.
             <Eg: _great --> (_gat),(re)
@@ -77,6 +159,9 @@ def encrypt(message):
         """
         A recursive function for randomizing the best possible candidates
         """
+
+
+
 
         def randomize(chunk):
          # Encrypted and Schema Blocks
@@ -102,19 +187,22 @@ def encrypt(message):
 
             if not chunk_schema:
                 return randomize(chunk)
-                #chunk_schema["0"] = chunk_dict.get("0")
 
             if not chunk_encrypted:
                 return randomize(chunk)
-                #chunk_encrypted["0"] = chunk_dict.get("0")
             
+            chunk_encrypted = dict(sorted(chunk_encrypted.items(), key=operator.itemgetter(1), reverse=True))
+            chunk_schema = dict(sorted(chunk_schema.items(), key=operator.itemgetter(1), reverse=True))
             return chunk_encrypted, chunk_schema
         
         chunk_encrypted, chunk_schema = randomize(chunk)
         
+       
+        # Appending the encrypted and schema items to the block dictionary
         block["encrypted"] = chunk_encrypted
         block["schema"] = chunk_schema
-        
+       
+
         # Appending the block to the list of blocks
         blocks.append(block)
 
@@ -126,4 +214,10 @@ def encrypt(message):
         
     return blocks
 
-print(json.dumps(encrypt("Twenty One Pilots is great"), indent=4))
+#print(json.dumps(encrypt("Twenty One Pilots is great"), indent=4))
+string_l = encrypt("Twenty One Pilots is great")
+new_l = Lexer(string_l)
+new_l.create_encrypted()
+new_l.generate_encrypted()
+#print(json.dumps(string_l, indent=4))
+#print(json.dumps(new_l.create_encrypted(), indent=4))
