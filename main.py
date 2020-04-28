@@ -22,15 +22,29 @@ class NullEncryptedContent(Exception):
 """
 
 class File():
-    def __init__(self, content, filename, extension):
+    def __init__(self, content, filename):
         self.content = content
         self.filename = filename
-        self.extension = extension
 
     def save(self):
-        with open(str(self.filename + "." + self.extension), 'w', encoding='utf-8') as file:
+        with open(str(self.filename), 'w', encoding='utf-8') as file:
             file.write(self.content)
             file.close()
+    def read(self):
+        with open(str(self.filename), 'r', encoding='utf-8') as file:
+            contents = file.read()
+            return contents
+
+
+class Parser():
+    def __init__(self, encrypted, schema, lexer: dict = {0: ')', 1: '!', 2: '@', 3: '#', 4: '$', 5: '%', 6: '^', 7: '&', 8: '*', 9: '('}):
+        self.encrypted = encrypted
+        self.schema = schema
+        self.lexer = lexer
+
+    def decrypt(self):
+        return "OK"
+
 
 
 class Lexer():
@@ -59,14 +73,14 @@ class Lexer():
             
             for index in sorted_block:
                 lexered_block.append(str(self.lexer.get(index)) + str( block["encrypted"].get(str(index))))
-            
+
             def concat(list):
                 result= ''
                 for element in list:
                     result += str(element)
                 return result
 
-            final_block["string"] = concat(lexered_block)
+            final_block["string"] = concat(random.sample(lexered_block, len(lexered_block)))
             
 
             #blocks.append(new_block)
@@ -92,14 +106,14 @@ class Lexer():
             
             for index in sorted_block:
                 lexered_block.append(str(self.lexer.get(index)) + str( block["schema"].get(str(index))))
-            
+
             def concat(list):
                 result= ''
                 for element in list:
                     result += str(element)
                 return result
-
-            final_block["string"] = concat(lexered_block)
+            
+            final_block["string"] = concat(random.sample(lexered_block, len(lexered_block)))
             
 
             #blocks.append(new_block)
@@ -129,12 +143,12 @@ class Lexer():
             schema_final += schema_string
         
         file_name = str(key_gen())
-        encrypted_file = File(encrypted_final, "encrypted_" + file_name, "halo")
+        encrypted_file = File(encrypted_final, "encrypted_" + file_name + ".halo")
         encrypted_file.save()
         
-        schema_file = File(schema_final, "schema_" + file_name, "halo")
+        schema_file = File(schema_final, "schema_" + file_name + ".halo")
         schema_file.save()
-        return "Files generated successfully at {}".join(file_name)
+        return "Files generated successfully at " + str(file_name)
             
 
 """
@@ -258,10 +272,10 @@ def encrypt(message):
     return blocks
 
 #print(json.dumps(encrypt("Twenty One Pilots is great"), indent=4))
-string_l = encrypt("Twenty One Pilots is great")
+string_l = encrypt("Twenty One pilots is great")
 new_l = Lexer(string_l)
 new_l.create_encrypted()
 new_l.create_schema()
-new_l.generate_files()
+print(new_l.generate_files())
 #print(json.dumps(string_l, indent=4))
 #print(json.dumps(new_l.create_encrypted(), indent=4))
