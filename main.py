@@ -6,7 +6,17 @@
 # Imports
 from functools import partial
 from io import StringIO
-import random, json, operator, string
+import random, json, operator, string, re
+from collections import OrderedDict
+
+"""
+
+    RegEx for DECRYPTION  
+
+"""
+
+DECRYPTION_REGEX = r'<([0-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-8][0-9]{4}|9[0-8][0-9]{3}|99[0-8][0-9]{2}|999[0-8][0-9]|9999[0-9]|[1-8][0-9]{5}|9[0-8][0-9]{4}|99[0-8][0-9]{3}|999[0-8][0-9]{2}|9999[0-8][0-9]|99999[0-9]|[1-8][0-9]{6}|9[0-8][0-9]{5}|99[0-8][0-9]{4}|999[0-8][0-9]{3}|9999[0-8][0-9]{2}|99999[0-8][0-9]|999999[0-9]|[1-8][0-9]{7}|9[0-8][0-9]{6}|99[0-8][0-9]{5}|999[0-8][0-9]{4}|9999[0-8][0-9]{3}|99999[0-8][0-9]{2}|999999[0-8][0-9]|9999999[0-9]|[1-8][0-9]{8}|9[0-8][0-9]{7}|99[0-8][0-9]{6}|999[0-8][0-9]{5}|9999[0-8][0-9]{4}|99999[0-8][0-9]{3}|999999[0-8][0-9]{2}|9999999[0-8][0-9]|99999999[0-9]|[1-8][0-9]{9}|9[0-8][0-9]{8}|99[0-8][0-9]{7}|999[0-8][0-9]{6}|9999[0-8][0-9]{5}|99999[0-8][0-9]{4}|999999[0-8][0-9]{3}|9999999[0-8][0-9]{2}|99999999[0-8][0-9]|999999999[0-9]|[1-8][0-9]{10}|9[0-8][0-9]{9}|99[0-8][0-9]{8}|999[0-8][0-9]{7}|9999[0-8][0-9]{6}|99999[0-8][0-9]{5}|999999[0-8][0-9]{4}|9999999[0-8][0-9]{3}|99999999[0-8][0-9]{2}|999999999[0-8][0-9]|9999999999[0-9]|[1-8][0-9]{11}|9[0-8][0-9]{10}|99[0-8][0-9]{9}|999[0-8][0-9]{8}|9999[0-8][0-9]{7}|99999[0-8][0-9]{6}|999999[0-8][0-9]{5}|9999999[0-8][0-9]{4}|99999999[0-8][0-9]{3}|999999999[0-8][0-9]{2}|9999999999[0-8][0-9]|99999999999[0-9]|1000000000000):([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?([!@#$%^&*()][a-z0-9\s])?>'
+KEY_REGEX = r'([!@#$%^&*()][a-z\s])'
 
 
 """
@@ -22,7 +32,7 @@ class NullEncryptedContent(Exception):
 """
 
 class File():
-    def __init__(self, content, filename):
+    def __init__(self, filename, content=None):
         self.content = content
         self.filename = filename
 
@@ -36,15 +46,45 @@ class File():
             return contents
 
 
+
 class Parser():
-    def __init__(self, encrypted, schema, lexer: dict = {0: ')', 1: '!', 2: '@', 3: '#', 4: '$', 5: '%', 6: '^', 7: '&', 8: '*', 9: '('}):
+    def __init__(self, encrypted, schema, lexer: dict = {')': 0,'!': 1,'@': 2,'#': 3,'$': 4,'%': 5,'^': 6,'&': 7,'*': 8,'(': 9}):
         self.encrypted = encrypted
         self.schema = schema
         self.lexer = lexer
+        self.combined = str(self.encrypted) + str(self.schema)
+        self.dictionary = {}
 
     def decrypt(self):
-        return "OK"
+        
+        # Helper function
+        def concat(list):
+            result= ''
+            for element in list:
+                result += str(element)
+            return result
 
+        pattern = re.compile(DECRYPTION_REGEX)
+        key_pattern = re.compile(KEY_REGEX)
+
+        blocks = re.findall(pattern, self.combined)
+
+        for block in blocks:
+            # Code for removing empty items
+            block = [chunk for chunk in block if chunk != '']
+            signature = block[0]
+            chunks = block[1:]
+            for chunk in chunks:
+                character = re.findall(key_pattern, chunk)
+                for i in character:
+                    i = list(i)
+                    self.dictionary[int(self.lexer[str(i[0])]) + int(signature)] = i[1]
+        
+        ordered_dictionary = OrderedDict(sorted(self.dictionary.items()))
+        final_string = ""
+        for i in ordered_dictionary:
+            final_string += ordered_dictionary[i]
+        return final_string
 
 
 class Lexer():
@@ -143,10 +183,10 @@ class Lexer():
             schema_final += schema_string
         
         file_name = str(key_gen())
-        encrypted_file = File(encrypted_final, "encrypted_" + file_name + ".halo")
+        encrypted_file = File("encrypted_" + file_name + ".halo", encrypted_final)
         encrypted_file.save()
         
-        schema_file = File(schema_final, "schema_" + file_name + ".halo")
+        schema_file = File("schema_" + file_name + ".halo", schema_final)
         schema_file.save()
         return "Files generated successfully at " + str(file_name)
             
@@ -272,10 +312,20 @@ def encrypt(message):
     return blocks
 
 #print(json.dumps(encrypt("Twenty One Pilots is great"), indent=4))
-string_l = encrypt("Twenty One pilots is great")
-new_l = Lexer(string_l)
-new_l.create_encrypted()
-new_l.create_schema()
-print(new_l.generate_files())
+#string_l = encrypt("Twenty One pilots is great")
+#new_l = Lexer(string_l)
+#new_l.create_encrypted()
+#new_l.create_schema()
+#print(new_l.generate_files())
+
+#dc = File("encrypted_AuLpntYOdm.halo")
+#sc = File("schema_AuLpntYOdm.halo")
+#enc_data = dc.read()
+#sch_data = sc.read()
+
+#dec = Parser(enc_data, sch_data)
+#print(dec.decrypt())
+
+
 #print(json.dumps(string_l, indent=4))
 #print(json.dumps(new_l.create_encrypted(), indent=4))
