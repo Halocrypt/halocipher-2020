@@ -199,9 +199,20 @@ class Lexer():
 def encrypt(message):
 
     """
+        Removing Punctuation to avoid bug
+
+    """
+    def remove_punctuation(my_str):
+        punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+        no_punct = ""
+        for char in my_str:
+            if char not in punctuations:
+                no_punct = no_punct + char
+        return no_punct
+    """
     Converting the text into a List() of chunks with the chunk_size = 10
     """
-
+    message = remove_punctuation(message)
 
     # Lowercasing the message content
     # Unicoding the string incase u r like me and didn't care to set an alias and used python2 all the time
