@@ -6,8 +6,9 @@
 # Imports
 from functools import partial
 from io import StringIO
-import random, json, operator, string, re
+import random, json, operator, string, re, sys
 from collections import OrderedDict
+
 
 """
 
@@ -271,7 +272,7 @@ def encrypt(message):
 
             if len(chunk_random_indices) != len(chunk):
                 chunk_final_indices = chunk_random_indices
-        
+            
             chunk_encrypted = {}
             chunk_schema = {}
 
@@ -282,11 +283,11 @@ def encrypt(message):
                 else:
                     chunk_schema[str(indice)] = chunk_dict.get(indice)
 
-            if not chunk_schema:
-                return randomize(chunk)
+            #if not chunk_schema:
+                #return randomize(chunk)
 
-            if not chunk_encrypted:
-                return randomize(chunk)
+            #if not chunk_encrypted:
+                #return randomize(chunk)
             
             chunk_encrypted = dict(sorted(chunk_encrypted.items(), key=operator.itemgetter(1), reverse=True))
             chunk_schema = dict(sorted(chunk_schema.items(), key=operator.itemgetter(1), reverse=True))
