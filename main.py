@@ -322,22 +322,3 @@ def encrypt(message):
 
         
     return blocks
-
-#print(json.dumps(encrypt("Twenty One Pilots is great"), indent=4))
-#string_l = encrypt("Twenty One pilots is great")
-#new_l = Lexer(string_l)
-#new_l.create_encrypted()
-#new_l.create_schema()
-#print(new_l.generate_files())
-
-#dc = File("encrypted_AuLpntYOdm.halo")
-#sc = File("schema_AuLpntYOdm.halo")
-#enc_data = dc.read()
-#sch_data = sc.read()
-
-#dec = Parser(enc_data, sch_data)
-#print(dec.decrypt())
-
-
-#print(json.dumps(string_l, indent=4))
-#print(json.dumps(new_l.create_encrypted(), indent=4))
